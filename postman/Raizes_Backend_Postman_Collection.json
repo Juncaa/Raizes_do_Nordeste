@@ -1,0 +1,76 @@
+{
+  "info": {
+    "name": "Raízes do Nordeste",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://127.0.0.1:8000"},
+    {"key": "tokenCliente", "value": ""},
+    {"key": "tokenAdmin", "value": ""},
+    {"key": "tokenCozinha", "value": ""},
+    {"key": "pedidoId", "value": "1"}
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "T01 - Login cliente válido",
+          "event": [{"listen":"test","script":{"exec":["pm.collectionVariables.set('tokenCliente', pm.response.json().access_token);"]}}],
+          "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/auth/login", "body": {"mode":"raw", "raw":"{\n  \"email\": \"cliente@exemplo.com\",\n  \"senha\": \"123456\"\n}"}}
+        },
+        {
+          "name": "T02 - Login admin válido",
+          "event": [{"listen":"test","script":{"exec":["pm.collectionVariables.set('tokenAdmin', pm.response.json().access_token);"]}}],
+          "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/auth/login", "body": {"mode":"raw", "raw":"{\n  \"email\": \"admin@exemplo.com\",\n  \"senha\": \"123456\"\n}"}}
+        },
+        {
+          "name": "T03 - Login cozinha válido",
+          "event": [{"listen":"test","script":{"exec":["pm.collectionVariables.set('tokenCozinha', pm.response.json().access_token);"]}}],
+          "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "url": "{{baseUrl}}/auth/login", "body": {"mode":"raw", "raw":"{\n  \"email\": \"cozinha@exemplo.com\",\n  \"senha\": \"123456\"\n}"}}
+        },
+        {
+          "name": "T04 - Acesso sem token deve retornar 401",
+          "request": {"method": "GET", "url": "{{baseUrl}}/pedidos"}
+        }
+      ]
+    },
+    {
+      "name": "Unidades e Cardápio",
+      "item": [
+        {"name":"T05 - Listar unidades", "request":{"method":"GET", "url":"{{baseUrl}}/unidades"}},
+        {"name":"T06 - Consultar cardápio da unidade 1", "request":{"method":"GET", "url":"{{baseUrl}}/unidades/1/cardapio"}}
+      ]
+    },
+    {
+      "name": "Pedidos e Pagamentos",
+      "item": [
+        {
+          "name": "T07 - Criar pedido válido com canalPedido APP",
+          "event": [{"listen":"test","script":{"exec":["pm.collectionVariables.set('pedidoId', pm.response.json().id);"]}}],
+          "request": {"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pedidos", "body":{"mode":"raw", "raw":"{\n  \"canalPedido\": \"APP\",\n  \"unidadeId\": 1,\n  \"itens\": [\n    {\"produtoId\": 1, \"quantidade\": 2}\n  ]\n}"}}
+        },
+        {"name":"T08 - Listar pedidos filtrando canalPedido APP", "request":{"method":"GET", "header":[{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pedidos?canalPedido=APP"}},
+        {"name":"T09 - Pagamento mock aprovado", "request":{"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pagamentos/pedidos/{{pedidoId}}", "body":{"mode":"raw", "raw":"{\n  \"formaPagamento\": \"MOCK\",\n  \"aprovado\": true\n}"}}},
+        {"name":"T10 - Atualizar status para PRONTO com perfil cozinha", "request":{"method":"PATCH", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCozinha}}"}], "url":"{{baseUrl}}/pedidos/{{pedidoId}}/status", "body":{"mode":"raw", "raw":"{\n  \"status\": \"PRONTO\"\n}"}}},
+        {"name":"T11 - Criar pedido para pagamento recusado", "event":[{"listen":"test","script":{"exec":["pm.collectionVariables.set('pedidoId', pm.response.json().id);"]}}], "request":{"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pedidos", "body":{"mode":"raw", "raw":"{\n  \"canalPedido\": \"WEB\",\n  \"unidadeId\": 1,\n  \"itens\": [\n    {\"produtoId\": 3, \"quantidade\": 1}\n  ]\n}"}}},
+        {"name":"T12 - Pagamento mock recusado", "request":{"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pagamentos/pedidos/{{pedidoId}}", "body":{"mode":"raw", "raw":"{\n  \"formaPagamento\": \"MOCK\",\n  \"aprovado\": false\n}"}}}
+      ]
+    },
+    {
+      "name": "Erros e Segurança",
+      "item": [
+        {"name":"T13 - Cliente tentando acessar auditoria deve retornar 403", "request":{"method":"GET", "header":[{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/auditorias"}},
+        {"name":"T14 - Pedido sem canalPedido deve retornar 422", "request":{"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pedidos", "body":{"mode":"raw", "raw":"{\n  \"unidadeId\": 1,\n  \"itens\": [\n    {\"produtoId\": 1, \"quantidade\": 1}\n  ]\n}"}}},
+        {"name":"T15 - Pedido com estoque insuficiente deve retornar 409", "request":{"method":"POST", "header":[{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/pedidos", "body":{"mode":"raw", "raw":"{\n  \"canalPedido\": \"APP\",\n  \"unidadeId\": 1,\n  \"itens\": [\n    {\"produtoId\": 1, \"quantidade\": 999}\n  ]\n}"}}},
+        {"name":"T16 - Consultar auditoria com admin deve retornar 200", "request":{"method":"GET", "header":[{"key":"Authorization","value":"Bearer {{tokenAdmin}}"}], "url":"{{baseUrl}}/auditorias"}}
+      ]
+    },
+    {
+      "name": "Fidelidade",
+      "item": [
+        {"name":"T17 - Consultar saldo de fidelidade", "request":{"method":"GET", "header":[{"key":"Authorization","value":"Bearer {{tokenCliente}}"}], "url":"{{baseUrl}}/fidelidade/saldo"}}
+      ]
+    }
+  ]
+}

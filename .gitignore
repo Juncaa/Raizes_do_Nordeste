@@ -1,0 +1,45 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+ENV/
+
+# Variáveis de ambiente / segredos locais
+.env
+.env.local
+.env.*.local
+
+# Banco SQLite local
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Cache de testes
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos do VS Code
+.vscode/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Builds / empacotamentos
+build/
+dist/
+*.egg-info/
+
+# Arquivos temporários
+tmp/
+temp/
+*.tmp
