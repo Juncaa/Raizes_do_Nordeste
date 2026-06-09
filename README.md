@@ -36,8 +36,7 @@ raizes_do_nordeste/
 │   └── test_fluxo.py
 ├── postman/
 │   └── Raizes_Backend_Postman_Collection.json
-├── docs/
-│   └── diagramas/
+├── diagramas/
 ├── .env.example
 ├── requirements.txt
 └── README.md
